@@ -3,103 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Propinas</title>
-    <meta
-        name="description"
-        content="Formulario para calcular y distribuir propinas entre compañeros de trabajo.">
-    <!-- Cargar fuentes desde Google Fonts -->
+    <title>Calculadora de Propinas</title>
+    <meta name="description" content="Calcula y distribuye propinas proporcionalmente según horas trabajadas y descuentos.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
-    <!-- Hoja de estilos personalizada -->
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
         <section class="form-card">
-            <!-- Título principal de la aplicación -->
-            <h1>☕ Calculadora de propinas ☕</h1>
-            <p>Responde las siguientes preguntas para calcular la distribución.</p>
-            
-            <!-- FORMULARIO 1: Datos generales de propinas -->
-            <form id="propinasForm" action="#" method="post">
+            <h1>&#9749;Calculadora de propinas&#9749;</h1>
+            <p>Distribuye las propinas del semanal proporcionalmente a las horas netas trabajadas.</p>
+
+            <form id="propinasForm">
                 <div class="form-block">
-                    <h2>Propinas</h2>
-                    
-                    <!-- Campo: Cantidad total de propinas a distribuir -->
+                    <h2>Propinas totales</h2>
                     <div class="form-field">
-                        <label for="propinasTotales">¿Cuántas propinas hay en total?</label>
-                        <input id="propinasTotales" name="propinasTotales" type="number" min="0" step="1" placeholder="Cantidad total de propinas" required>
-                    </div>
-                    
-                    <!-- Campo: Cantidad de parners que compartirán las propinas -->
-                    <div class="form-field">
-                        <label for="parners">Número de parners</label>
-                        <input id="parners" name="parners" type="number" min="1" step="1" placeholder="Número de parners" required>
+                        <label for="propinasTotales">¿Cuánto se repartirá esta semana?</label>
+                        <input id="propinasTotales" type="number" min="0" step="1" placeholder="Monto total de propinas" required>
                     </div>
                 </div>
             </form>
-            
-            <!-- FORMULARIO 2: Detalles específicos del parner/supervisor -->
-            <form id="detalleForm" action="#" method="post">
-                <div class="form-block">
-                    <h2>Detalles del parner</h2>
-                    
-                    <!-- Campo: Nombre del parner o supervisor -->
-                    <div class="form-field">
-                        <label for="nombreParner">Nombre del parner/supervisor</label>
-                        <input id="nombreParner" name="nombreParner" type="text" placeholder="Nombre del parner/supervisor" required>
-                    </div>
-                    
-                    <!-- Campo: Rol (parner o supervisor) -->
-                    <!-- Los supervisores trabajan 12 días fijos (mes completo)
-                         Los parners tienen diferentes jornadas (5x2, 4x3, 3x4) -->
-                    <div class="form-field">
-                        <label for="rolParner">¿Eres parner o supervisor?</label>
-                        <select id="rolParner" name="rolParner" required>
-                            <option value="">Selecciona...</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="parner">Parner</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Campo: Tipo de jornada (solo visible para parners)
-                         - 5x2: 5 días trabajo, 2 descanso = 10 días trabajados
-                         - 4x3: 4 días trabajo, 3 descanso = 8 días trabajados
-                         - 3x4: 3 días trabajo, 4 descanso = 6 días trabajados -->
-                    <div class="form-field" id="jornadaField">
-                        <label for="jornada">Tipo de jornada</label>
-                        <select id="jornada" name="jornada">
-                            <option value="">Selecciona jornada...</option>
-                            <option value="5x2">5x2</option>
-                            <option value="4x3">4x3</option>
-                            <option value="3x4">3x4</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Campo: Cantidad de faltas
-                         Las faltas reducen proporcionalmente las propinas:
-                         Factor de descuento = 1 - (faltas / 12)
-                         Ejemplo: 3 faltas = 25% descuento, 6 faltas = 50% descuento -->
-                    <div class="form-field">
-                        <label for="faltas">Número de faltas</label>
-                        <input id="faltas" name="faltas" type="number" min="0" max="12" step="1" placeholder="Faltas registradas (máx. 12)" required>
-                    </div>
-                </div>
-                
-                <!-- Botón de envío: Calcula y muestra el resultado -->
-                <div class="form-actions">
-                    <button type="submit">Calcular Propinas</button>
-                </div>
-            </form>
-            
-            <!-- Área donde se muestra el resultado del cálculo
-                 Se actualiza dinámicamente con JavaScript al hacer click en "Calcular Propinas" -->
-            <div id="resultado" class="form-field result"></div>
+
+            <div class="form-block">
+                <h2>Partners</h2>
+                <p class="form-hint">Cada partner trabaja 6 días a la semana. Las horas netas = (horas/día × 6) − descuento por penalizaciones.</p>
+                <div id="partnersContainer"></div>
+                <button type="button" id="addPartnerBtn" class="btn-secondary">+ Agregar partner</button>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="calcularBtn">Calcular propinas</button>
+            </div>
+
+            <div id="resultado" class="form-field result" style="display:none;"></div>
         </section>
     </main>
-    
-    <!-- Script que contiene toda la lógica de cálculo -->
     <script src="operacion.js"></script>
 </body>
 </html>
