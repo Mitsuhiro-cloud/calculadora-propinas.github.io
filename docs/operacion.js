@@ -1,19 +1,4 @@
-﻿const DEFAULT_PARTNERS = [
-    { name: 'IVETH', horasPorDia: 8 },
-    { name: 'EDMUNDO', horasPorDia: 6 },
-    { name: 'MARGOT', horasPorDia: 8 },
-    { name: 'RODRIGO', horasPorDia: 4 },
-    { name: 'LUIS', horasPorDia: 8 },
-    { name: 'FERNANDO', horasPorDia: 6 },
-    { name: 'JAVIER', horasPorDia: 8 },
-    { name: 'RICARDO', horasPorDia: 4 },
-    { name: 'NAYELI', horasPorDia: 8 },
-    { name: 'ENRIQUE', horasPorDia: 6 },
-    { name: 'OBETH', horasPorDia: 6 },
-    { name: 'FRANCISCO', horasPorDia: 6 },
-];
-
-const DIAS_POR_SEMANA = 6;
+﻿const DIAS_POR_SEMANA = 6;
 const partnersContainer = document.getElementById('partnersContainer');
 const addPartnerBtn = document.getElementById('addPartnerBtn');
 const calcularBtn = document.getElementById('calcularBtn');
@@ -21,7 +6,7 @@ const resultado = document.getElementById('resultado');
 
 let idCounter = 0;
 
-function crearRowPartner(data, fijo) {
+function crearRowPartner() {
     const id = idCounter++;
     const row = document.createElement('div');
     row.className = 'partner-row';
@@ -30,35 +15,33 @@ function crearRowPartner(data, fijo) {
     row.innerHTML = `
         <div class="form-field">
             <label>Nombre</label>
-            <input type="text" class="p-name" value="${data.name}" ${fijo ? '' : 'placeholder="Nombre del partner"'}>
+            <input type="text" class="p-name" placeholder="Nombre del partner">
         </div>
         <div class="form-field">
             <label>Horas/día</label>
             <select class="p-horas">
-                ${[4, 6, 8].map(h =>
-                    `<option value="${h}" ${data.horasPorDia === h ? 'selected' : ''}>${h}h</option>`
-                ).join('')}
+                <option value="4">4h</option>
+                <option value="6" selected>6h</option>
+                <option value="8">8h</option>
             </select>
         </div>
         <div class="form-field">
             <label>Dto. horas</label>
             <input type="number" class="p-descuento" min="0" step="1" value="0" placeholder="0">
         </div>
-        <button type="button" class="btn-remove" ${fijo ? 'style="display:none"' : ''}>Eliminar</button>
+        <button type="button" class="btn-remove">Eliminar</button>
     `;
 
-    row.querySelector('.btn-remove')?.addEventListener('click', () => row.remove());
+    row.querySelector('.btn-remove').addEventListener('click', () => row.remove());
     partnersContainer.appendChild(row);
 }
 
 function initPartners() {
     partnersContainer.innerHTML = '';
-    DEFAULT_PARTNERS.forEach(p => crearRowPartner(p, true));
+    crearRowPartner();
 }
 
-addPartnerBtn.addEventListener('click', () => {
-    crearRowPartner({ name: '', horasPorDia: 6 }, false);
-});
+addPartnerBtn.addEventListener('click', crearRowPartner);
 
 calcularBtn.addEventListener('click', calcular);
 
