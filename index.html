@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Propinas</title>
+    <meta name="description" content="Calcula y distribuye propinas proporcionalmente según horas trabajadas y descuentos.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <section class="form-card">
+            <h1>☕ Calculadora de propinas ☕</h1>
+            <p>Rellena la siguiente información para calcular la distribución.</p>
+
+            <form id="propinasForm">
+                <div class="form-block">
+                    <h2>Propinas totales</h2>
+                    <div class="form-field">
+                        <input id="propinasTotales" type="number" min="0" step="1" placeholder="Monto total de propinas" required>
+                    </div>
+                </div>
+            </form>
+
+            <div class="form-block">
+                <h2>Partners</h2>
+                <div id="partnersContainer"></div>
+                <button type="button" id="addPartnerBtn" class="btn-secondary">+ Agregar partner</button>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="calcularBtn">Calcular propinas</button>
+            </div>
+
+            <div id="resultado" class="form-field result" style="display:none;"></div>
+            <p class="footer-msg">Este mensaje es informativo, tu propina puede variar de acuerdo a diferentes factores.</p>
+        </section>
+    </main>
+    <script src="operacion.js"></script>
+</body>
+</html>
