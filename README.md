@@ -1,2 +1,2 @@
 # calculadora-propinas.github.io
-calculadora para propinas  para starbucks
+calculadora de propinas para starbucks
