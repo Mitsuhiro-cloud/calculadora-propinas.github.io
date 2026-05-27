@@ -1,10 +1,67 @@
-﻿const DIAS_POR_SEMANA = 6;
-const partnersContainer = document.getElementById('partnersContainer');
+﻿const partnersContainer = document.getElementById('partnersContainer');
 const addPartnerBtn = document.getElementById('addPartnerBtn');
 const calcularBtn = document.getElementById('calcularBtn');
 const resultado = document.getElementById('resultado');
 
 let idCounter = 0;
+
+const SCHEDULES = {
+    supervisor: [
+        { value: 36, label: '6h/d — 36h/sem' },
+        { value: 48, label: '8h/d — 48h/sem' },
+    ],
+    partner: [
+        { value: 40, label: '5×2 — 40h/sem' },
+        { value: 32, label: '4×3 — 32h/sem' },
+        { value: 24, label: '3×4 — 24h/sem' },
+    ],
+};
+
+function crearDtoItem(dtoSection, tipo, cant) {
+    const item = document.createElement('div');
+    item.className = 'dto-item';
+
+    const tipos = [
+        { value: 8, label: 'falta/incapacidad' },
+        { value: 16, label: 'Reporte hechos' },
+        { value: 24, label: 'Junta' },
+    ];
+
+    item.innerHTML = `
+        <select class="dto-tipo">
+            ${tipos.map(t => `<option value="${t.value}" ${t.value === tipo ? 'selected' : ''}>${t.label}</option>`).join('')}
+        </select>
+        <input type="number" class="dto-cant" min="1" step="1" value="${cant}">
+        <span class="dto-item-total">${tipo * cant}h</span>
+        <button type="button" class="dto-remove">×</button>
+    `;
+
+    function recalcularItem() {
+        const t = Number(item.querySelector('.dto-tipo').value);
+        const c = Number(item.querySelector('.dto-cant').value) || 0;
+        item.querySelector('.dto-item-total').textContent = (t * c) + 'h';
+        recalcularDtoTotal(dtoSection);
+    }
+
+    item.querySelector('.dto-tipo').addEventListener('change', recalcularItem);
+    item.querySelector('.dto-cant').addEventListener('input', recalcularItem);
+    item.querySelector('.dto-remove').addEventListener('click', () => {
+        item.remove();
+        recalcularDtoTotal(dtoSection);
+    });
+
+    return item;
+}
+
+function recalcularDtoTotal(dtoSection) {
+    const items = dtoSection.querySelectorAll('.dto-item');
+    const total = Array.from(items).reduce((s, item) => {
+        const t = Number(item.querySelector('.dto-tipo').value);
+        const c = Number(item.querySelector('.dto-cant').value) || 0;
+        return s + t * c;
+    }, 0);
+    dtoSection.querySelector('.dto-total').textContent = total + 'h';
+}
 
 function crearRowPartner() {
     const id = idCounter++;
@@ -15,22 +72,50 @@ function crearRowPartner() {
     row.innerHTML = `
         <div class="form-field">
             <label>Nombre</label>
-            <input type="text" class="p-name" placeholder="Nombre del partner">
+            <input type="text" class="p-name" placeholder="Nombre">
         </div>
         <div class="form-field">
-            <label>Horas/día</label>
-            <select class="p-horas">
-                <option value="4">4h</option>
-                <option value="6" selected>6h</option>
-                <option value="8">8h</option>
+            <label>Rol</label>
+            <select class="p-rol">
+                <option value="partner" selected>Partner</option>
+                <option value="supervisor">Supervisor</option>
             </select>
         </div>
         <div class="form-field">
-            <label>Dto. horas</label>
-            <input type="number" class="p-descuento" min="0" step="1" value="0" placeholder="0">
+            <label>Horario</label>
+            <select class="p-horario"></select>
         </div>
         <button type="button" class="btn-remove">Eliminar</button>
+        <div class="dto-section">
+            <div class="dto-header">
+                <label>Dto. horas</label>
+                <span class="dto-total">0h</span>
+            </div>
+            <div class="dto-items"></div>
+            <button type="button" class="btn-dto-add">+ Agregar descuento</button>
+        </div>
     `;
+
+    const rolSelect = row.querySelector('.p-rol');
+    const horarioSelect = row.querySelector('.p-horario');
+
+    function actualizarHorario() {
+        const schedules = SCHEDULES[rolSelect.value];
+        horarioSelect.innerHTML = schedules.map(s =>
+            `<option value="${s.value}">${s.label}</option>`
+        ).join('');
+    }
+
+    actualizarHorario();
+    rolSelect.addEventListener('change', actualizarHorario);
+
+    const dtoSection = row.querySelector('.dto-section');
+    dtoSection.querySelector('.btn-dto-add').addEventListener('click', () => {
+        const item = crearDtoItem(dtoSection, 8, 1);
+        dtoSection.querySelector('.dto-items').appendChild(item);
+    });
+    const firstItem = crearDtoItem(dtoSection, 8, 1);
+    dtoSection.querySelector('.dto-items').appendChild(firstItem);
 
     row.querySelector('.btn-remove').addEventListener('click', () => row.remove());
     partnersContainer.appendChild(row);
@@ -66,11 +151,24 @@ function calcular() {
             mostrarResultado('<p style="color:#b91c1c;text-align:center;">Completa los nombres de todos los partners.</p>');
             return;
         }
-        const hpd = Number(row.querySelector('.p-horas').value);
-        const dto = Number(row.querySelector('.p-descuento').value) || 0;
-        const semanales = hpd * DIAS_POR_SEMANA;
+        const rol = row.querySelector('.p-rol').value;
+        const semanales = Number(row.querySelector('.p-horario').value);
+        const dtoItems = row.querySelectorAll('.dto-item');
+        const dto = Array.from(dtoItems).reduce((s, item) => {
+            const tipo = Number(item.querySelector('.dto-tipo').value);
+            const cant = Number(item.querySelector('.dto-cant').value) || 0;
+            return s + tipo * cant;
+        }, 0);
         const netas = Math.max(0, semanales - dto);
-        partners.push({ name, hpd, semanales, dto, netas });
+
+        let horarioLabel;
+        if (rol === 'supervisor') {
+            horarioLabel = semanales === 36 ? '6h/d' : '8h/d';
+        } else {
+            horarioLabel = semanales === 40 ? '5×2' : semanales === 32 ? '4×3' : '3×4';
+        }
+
+        partners.push({ name, rol, horarioLabel, semanales, dto, netas });
     }
 
     const totalNetas = partners.reduce((s, p) => s + p.netas, 0);
@@ -108,7 +206,8 @@ function renderResultados(partners, total, totalNetas, factor) {
             <thead>
                 <tr>
                     <th>Partner</th>
-                    <th>H/d</th>
+                    <th>Rol</th>
+                    <th>Horario</th>
                     <th>H sem</th>
                     <th>Dto</th>
                     <th>H netas</th>
@@ -122,7 +221,8 @@ function renderResultados(partners, total, totalNetas, factor) {
     for (const p of partners) {
         html += `<tr>
             <td><strong>${p.name}</strong></td>
-            <td>${p.hpd}h</td>
+            <td>${p.rol === 'supervisor' ? 'Sup.' : 'Part.'}</td>
+            <td>${p.horarioLabel}</td>
             <td>${p.semanales}h</td>
             <td>${p.dto > 0 ? p.dto + 'h' : '—'}</td>
             <td>${p.netas}h</td>
@@ -133,7 +233,7 @@ function renderResultados(partners, total, totalNetas, factor) {
 
     const suma = partners.reduce((s, p) => s + p.propina, 0);
     html += `<tr class="total-row">
-        <td colspan="6"><strong>Total</strong></td>
+        <td colspan="7"><strong>Total</strong></td>
         <td><strong>$${suma.toFixed(2)}</strong></td>
     </tr></tbody></table>`;
 
