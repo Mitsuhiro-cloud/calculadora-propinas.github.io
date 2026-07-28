@@ -7,13 +7,13 @@ let idCounter = 0;
 
 const SCHEDULES = {
     supervisor: [
-        { value: 36, label: '6h/d — 36h/sem' },
-        { value: 48, label: '8h/d — 48h/sem' },
+        { value: 36, label: '6h/d — 36h/sem', hoursPerDay: 6 },
+        { value: 48, label: '8h/d — 48h/sem', hoursPerDay: 8 },
     ],
     partner: [
-        { value: 40, label: '5×2 — 40h/sem' },
-        { value: 32, label: '4×3 — 32h/sem' },
-        { value: 24, label: '3×4 — 24h/sem' },
+        { value: 40, label: '5×2 — 40h/sem', hoursPerDay: 8 },
+        { value: 32, label: '4×3 — 32h/sem', hoursPerDay: 8 },
+        { value: 24, label: '3×4 — 24h/sem', hoursPerDay: 8 },
     ],
 };
 
@@ -94,6 +94,21 @@ function crearRowPartner() {
             <div class="dto-items"></div>
             <button type="button" class="btn-dto-add">+ Agregar descuento</button>
         </div>
+        <div class="extra-section">
+            <button type="button" class="btn-extra-toggle">Horas extra</button>
+            <div class="extra-panel" style="display:none;">
+                <div class="extra-header">
+                    <label>Horas extra</label>
+                    <span class="extra-total">0h</span>
+                </div>
+                <div class="extra-items">
+                    <div class="extra-item">
+                        <input type="number" class="extra-hours" min="1" step="1" placeholder="Horas">
+                        <button type="button" class="extra-remove">×</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
 
     const rolSelect = row.querySelector('.p-rol');
@@ -117,6 +132,30 @@ function crearRowPartner() {
     const firstItem = crearDtoItem(dtoSection, 8, 1);
     dtoSection.querySelector('.dto-items').appendChild(firstItem);
 
+    const extraToggle = row.querySelector('.btn-extra-toggle');
+    const extraPanel = row.querySelector('.extra-panel');
+    const extraInput = row.querySelector('.extra-hours');
+    const extraTotal = row.querySelector('.extra-total');
+    const extraRemove = row.querySelector('.extra-remove');
+
+    extraToggle.addEventListener('click', () => {
+        const isVisible = extraPanel.style.display !== 'none';
+        extraPanel.style.display = isVisible ? 'none' : 'block';
+        extraToggle.classList.toggle('active', !isVisible);
+    });
+
+    extraInput.addEventListener('input', () => {
+        const val = Number(extraInput.value) || 0;
+        extraTotal.textContent = val + 'h';
+    });
+
+    extraRemove.addEventListener('click', () => {
+        extraInput.value = '';
+        extraTotal.textContent = '0h';
+        extraPanel.style.display = 'none';
+        extraToggle.classList.remove('active');
+    });
+
     row.querySelector('.btn-remove').addEventListener('click', () => row.remove());
     partnersContainer.appendChild(row);
 }
@@ -132,6 +171,7 @@ calcularBtn.addEventListener('click', calcular);
 
 function calcular() {
     const total = Number(document.getElementById('propinasTotales').value);
+    const diasTrabajados = Number(document.getElementById('diasTrabajados').value) || 1;
 
     if (!Number.isFinite(total) || total <= 0) {
         mostrarResultado('<p style="color:#b91c1c;text-align:center;">Ingresa un monto total de propinas válido.</p>');
@@ -153,13 +193,18 @@ function calcular() {
         }
         const rol = row.querySelector('.p-rol').value;
         const semanales = Number(row.querySelector('.p-horario').value);
+        const schedule = SCHEDULES[rol].find(s => s.value === semanales);
+        const horasPorDia = schedule ? schedule.hoursPerDay : 8;
+        const horasTotales = diasTrabajados * horasPorDia;
         const dtoItems = row.querySelectorAll('.dto-item');
         const dto = Array.from(dtoItems).reduce((s, item) => {
             const tipo = Number(item.querySelector('.dto-tipo').value);
             const cant = Number(item.querySelector('.dto-cant').value) || 0;
             return s + tipo * cant;
         }, 0);
-        const netas = Math.max(0, semanales - dto);
+        const extraInput = row.querySelector('.extra-hours');
+        const extra = Number(extraInput.value) || 0;
+        const netas = Math.max(0, horasTotales - dto + extra);
 
         let horarioLabel;
         if (rol === 'supervisor') {
@@ -168,7 +213,7 @@ function calcular() {
             horarioLabel = semanales === 40 ? '5×2' : semanales === 32 ? '4×3' : '3×4';
         }
 
-        partners.push({ name, rol, horarioLabel, semanales, dto, netas });
+        partners.push({ name, rol, horarioLabel, semanales, horasPorDia, horasTotales, dto, extra, netas });
     }
 
     const totalNetas = partners.reduce((s, p) => s + p.netas, 0);
@@ -189,10 +234,10 @@ function calcular() {
         partners[partners.length - 1].propina += diff;
     }
 
-    renderResultados(partners, total, totalNetas, factor);
+    renderResultados(partners, total, totalNetas, factor, diasTrabajados);
 }
 
-function renderResultados(partners, total, totalNetas, factor) {
+function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
     const fStr = Number.isInteger(factor) ? factor.toFixed(0) : factor.toFixed(4);
 
     let html = `
@@ -200,7 +245,8 @@ function renderResultados(partners, total, totalNetas, factor) {
         <div class="result-summary">
             Total: <strong>$${total.toFixed(2)}</strong> &middot;
             Horas netas: <strong>${totalNetas}h</strong> &middot;
-            Factor: <strong>$${fStr}/h</strong>
+            Factor: <strong>$${fStr}/h</strong> &middot;
+            Período: <strong>${diasTrabajados} ${diasTrabajados === 1 ? 'día' : 'días'}</strong>
         </div>
         <table>
             <thead>
@@ -208,8 +254,10 @@ function renderResultados(partners, total, totalNetas, factor) {
                     <th>Partner</th>
                     <th>Rol</th>
                     <th>Horario</th>
-                    <th>H sem</th>
+                    <th>H/día</th>
+                    <th>H totales</th>
                     <th>Dto</th>
+                    <th>Ext</th>
                     <th>H netas</th>
                     <th>%</th>
                     <th>Propina</th>
@@ -223,8 +271,10 @@ function renderResultados(partners, total, totalNetas, factor) {
             <td><strong>${p.name}</strong></td>
             <td>${p.rol === 'supervisor' ? 'Sup.' : 'Part.'}</td>
             <td>${p.horarioLabel}</td>
-            <td>${p.semanales}h</td>
+            <td>${p.horasPorDia}h</td>
+            <td>${p.horasTotales}h</td>
             <td>${p.dto > 0 ? p.dto + 'h' : '—'}</td>
+            <td>${p.extra > 0 ? p.extra + 'h' : '—'}</td>
             <td>${p.netas}h</td>
             <td>${p.pct.toFixed(1)}</td>
             <td><strong>$${p.propina.toFixed(2)}</strong></td>
@@ -233,7 +283,7 @@ function renderResultados(partners, total, totalNetas, factor) {
 
     const suma = partners.reduce((s, p) => s + p.propina, 0);
     html += `<tr class="total-row">
-        <td colspan="7"><strong>Total</strong></td>
+        <td colspan="9"><strong>Total</strong></td>
         <td><strong>$${suma.toFixed(2)}</strong></td>
     </tr></tbody></table>`;
 

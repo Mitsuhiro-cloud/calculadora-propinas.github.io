@@ -296,6 +296,108 @@ button:active { transform: translateY(0); }
     background: rgba(31,71,47,0.06);
 }
 
+.extra-section {
+    grid-column: 1 / -1;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 4px;
+    padding-top: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.extra-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.extra-header label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.extra-total {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1f472f;
+}
+
+.extra-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.extra-item {
+    display: grid;
+    grid-template-columns: 1fr 30px;
+    gap: 6px;
+    align-items: center;
+}
+
+.extra-hours {
+    width: 100%;
+    padding: 4px;
+    text-align: center;
+    font-size: 0.75rem;
+    border: 1px solid #c2b496;
+    border-radius: 6px;
+    background: #f3ede0;
+    color: #0f172a;
+    font-family: 'Inter', sans-serif;
+    -moz-appearance: textfield;
+}
+
+.extra-hours::-webkit-inner-spin-button,
+.extra-hours::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.extra-remove {
+    background: transparent;
+    color: #b91c1c;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 2px;
+    width: auto;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+.extra-remove:hover {
+    background: rgba(185,28,28,0.08);
+}
+
+.btn-extra-toggle {
+    background: transparent;
+    color: #1f472f;
+    border: 1px dashed #c2b496;
+    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+}
+
+.btn-extra-toggle:hover {
+    background: rgba(31,71,47,0.06);
+}
+
+.btn-extra-toggle.active {
+    background: rgba(31,71,47,0.1);
+    border-style: solid;
+    border-color: #1f472f;
+}
+
 #resultado {
     min-height: 70px;
     padding: clamp(14px, 2.5vw, 18px) clamp(14px, 2.5vw, 20px);
@@ -455,6 +557,15 @@ button:active { transform: translateY(0); }
     }
 
     .dto-cant {
+        font-size: 0.7rem;
+        padding: 3px;
+    }
+
+    .extra-item {
+        grid-template-columns: 1fr 28px;
+    }
+
+    .extra-hours {
         font-size: 0.7rem;
         padding: 3px;
     }
