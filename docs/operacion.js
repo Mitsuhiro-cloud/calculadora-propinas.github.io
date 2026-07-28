@@ -7,13 +7,13 @@ let idCounter = 0;
 
 const SCHEDULES = {
     supervisor: [
-        { value: 36, label: '6h/d — 36h/sem', hoursPerDay: 6 },
-        { value: 48, label: '8h/d — 48h/sem', hoursPerDay: 8 },
+        { value: 36, label: '6h/d — 36h/sem', hoursPerDay: 6, daysPerWeek: 6 },
+        { value: 48, label: '8h/d — 48h/sem', hoursPerDay: 8, daysPerWeek: 6 },
     ],
     partner: [
-        { value: 40, label: '5×2 — 40h/sem', hoursPerDay: 8 },
-        { value: 32, label: '4×3 — 32h/sem', hoursPerDay: 8 },
-        { value: 24, label: '3×4 — 24h/sem', hoursPerDay: 8 },
+        { value: 40, label: '5×2 — 40h/sem', hoursPerDay: 8, daysPerWeek: 5 },
+        { value: 32, label: '4×3 — 32h/sem', hoursPerDay: 8, daysPerWeek: 4 },
+        { value: 24, label: '3×4 — 24h/sem', hoursPerDay: 8, daysPerWeek: 3 },
     ],
 };
 
@@ -195,7 +195,8 @@ function calcular() {
         const semanales = Number(row.querySelector('.p-horario').value);
         const schedule = SCHEDULES[rol].find(s => s.value === semanales);
         const horasPorDia = schedule ? schedule.hoursPerDay : 8;
-        const horasTotales = diasTrabajados * horasPorDia;
+        const diasPorSemana = schedule ? schedule.daysPerWeek : 5;
+        const horasTotales = Math.round((diasTrabajados / 7) * diasPorSemana * horasPorDia);
         const dtoItems = row.querySelectorAll('.dto-item');
         const dto = Array.from(dtoItems).reduce((s, item) => {
             const tipo = Number(item.querySelector('.dto-tipo').value);
@@ -213,7 +214,7 @@ function calcular() {
             horarioLabel = semanales === 40 ? '5×2' : semanales === 32 ? '4×3' : '3×4';
         }
 
-        partners.push({ name, rol, horarioLabel, semanales, horasPorDia, horasTotales, dto, extra, netas });
+        partners.push({ name, rol, horarioLabel, semanales, horasPorDia, diasPorSemana, horasTotales, dto, extra, netas });
     }
 
     const totalNetas = partners.reduce((s, p) => s + p.netas, 0);
@@ -254,6 +255,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
                     <th>Partner</th>
                     <th>Rol</th>
                     <th>Horario</th>
+                    <th>Días/sem</th>
                     <th>H/día</th>
                     <th>H totales</th>
                     <th>Dto</th>
@@ -271,6 +273,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
             <td><strong>${p.name}</strong></td>
             <td>${p.rol === 'supervisor' ? 'Sup.' : 'Part.'}</td>
             <td>${p.horarioLabel}</td>
+            <td>${p.diasPorSemana}d</td>
             <td>${p.horasPorDia}h</td>
             <td>${p.horasTotales}h</td>
             <td>${p.dto > 0 ? p.dto + 'h' : '—'}</td>
@@ -283,7 +286,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
 
     const suma = partners.reduce((s, p) => s + p.propina, 0);
     html += `<tr class="total-row">
-        <td colspan="9"><strong>Total</strong></td>
+        <td colspan="10"><strong>Total</strong></td>
         <td><strong>$${suma.toFixed(2)}</strong></td>
     </tr></tbody></table>`;
 
