@@ -94,6 +94,21 @@ function crearRowPartner() {
             <div class="dto-items"></div>
             <button type="button" class="btn-dto-add">+ Agregar descuento</button>
         </div>
+        <div class="extra-section">
+            <button type="button" class="btn-extra-toggle">Horas extra</button>
+            <div class="extra-panel" style="display:none;">
+                <div class="extra-header">
+                    <label>Horas extra</label>
+                    <span class="extra-total">0h</span>
+                </div>
+                <div class="extra-items">
+                    <div class="extra-item">
+                        <input type="number" class="extra-hours" min="1" step="1" placeholder="Horas">
+                        <button type="button" class="extra-remove">×</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
 
     const rolSelect = row.querySelector('.p-rol');
@@ -116,6 +131,30 @@ function crearRowPartner() {
     });
     const firstItem = crearDtoItem(dtoSection, 8, 1);
     dtoSection.querySelector('.dto-items').appendChild(firstItem);
+
+    const extraToggle = row.querySelector('.btn-extra-toggle');
+    const extraPanel = row.querySelector('.extra-panel');
+    const extraInput = row.querySelector('.extra-hours');
+    const extraTotal = row.querySelector('.extra-total');
+    const extraRemove = row.querySelector('.extra-remove');
+
+    extraToggle.addEventListener('click', () => {
+        const isVisible = extraPanel.style.display !== 'none';
+        extraPanel.style.display = isVisible ? 'none' : 'block';
+        extraToggle.classList.toggle('active', !isVisible);
+    });
+
+    extraInput.addEventListener('input', () => {
+        const val = Number(extraInput.value) || 0;
+        extraTotal.textContent = val + 'h';
+    });
+
+    extraRemove.addEventListener('click', () => {
+        extraInput.value = '';
+        extraTotal.textContent = '0h';
+        extraPanel.style.display = 'none';
+        extraToggle.classList.remove('active');
+    });
 
     row.querySelector('.btn-remove').addEventListener('click', () => row.remove());
     partnersContainer.appendChild(row);
@@ -163,7 +202,9 @@ function calcular() {
             const cant = Number(item.querySelector('.dto-cant').value) || 0;
             return s + tipo * cant;
         }, 0);
-        const netas = Math.max(0, horasTotales - dto);
+        const extraInput = row.querySelector('.extra-hours');
+        const extra = Number(extraInput.value) || 0;
+        const netas = Math.max(0, horasTotales - dto + extra);
 
         let horarioLabel;
         if (rol === 'supervisor') {
@@ -172,7 +213,7 @@ function calcular() {
             horarioLabel = semanales === 40 ? '5×2' : semanales === 32 ? '4×3' : '3×4';
         }
 
-        partners.push({ name, rol, horarioLabel, semanales, horasPorDia, horasTotales, dto, netas });
+        partners.push({ name, rol, horarioLabel, semanales, horasPorDia, horasTotales, dto, extra, netas });
     }
 
     const totalNetas = partners.reduce((s, p) => s + p.netas, 0);
@@ -216,6 +257,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
                     <th>H/día</th>
                     <th>H totales</th>
                     <th>Dto</th>
+                    <th>Ext</th>
                     <th>H netas</th>
                     <th>%</th>
                     <th>Propina</th>
@@ -232,6 +274,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
             <td>${p.horasPorDia}h</td>
             <td>${p.horasTotales}h</td>
             <td>${p.dto > 0 ? p.dto + 'h' : '—'}</td>
+            <td>${p.extra > 0 ? p.extra + 'h' : '—'}</td>
             <td>${p.netas}h</td>
             <td>${p.pct.toFixed(1)}</td>
             <td><strong>$${p.propina.toFixed(2)}</strong></td>
@@ -240,7 +283,7 @@ function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
 
     const suma = partners.reduce((s, p) => s + p.propina, 0);
     html += `<tr class="total-row">
-        <td colspan="8"><strong>Total</strong></td>
+        <td colspan="9"><strong>Total</strong></td>
         <td><strong>$${suma.toFixed(2)}</strong></td>
     </tr></tbody></table>`;
 
