@@ -241,62 +241,96 @@ function calcular() {
 function renderResultados(partners, total, totalNetas, factor, diasTrabajados) {
     const fStr = Number.isInteger(factor) ? factor.toFixed(0) : factor.toFixed(4);
 
-    let html = `
-        <div class="result-title">Distribución de propinas</div>
-        <div class="result-summary">
-            Total: <strong>$${total.toFixed(2)}</strong> &middot;
-            Horas netas: <strong>${totalNetas}h</strong> &middot;
-            Factor: <strong>$${fStr}/h</strong> &middot;
-            Período: <strong>${diasTrabajados} ${diasTrabajados === 1 ? 'día' : 'días'}</strong>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Partner</th>
-                    <th>Rol</th>
-                    <th>Horario</th>
-                    <th>Días/sem</th>
-                    <th>H/día</th>
-                    <th>H totales</th>
-                    <th>Dto</th>
-                    <th>Ext</th>
-                    <th>H netas</th>
-                    <th>%</th>
-                    <th>Propina</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    resultado.innerHTML = '';
+    resultado.style.display = 'block';
+    resultado.style.color = '#0f172a';
 
+    const title = document.createElement('div');
+    title.className = 'result-title';
+    title.textContent = 'Distribución de propinas';
+    resultado.appendChild(title);
+
+    const summary = document.createElement('div');
+    summary.className = 'result-summary';
+    summary.append(
+        document.createTextNode('Total: '),
+        strongTag('$' + total.toFixed(2)),
+        document.createTextNode(' · Horas netas: '),
+        strongTag(totalNetas + 'h'),
+        document.createTextNode(' · Factor: '),
+        strongTag('$' + fStr + '/h'),
+        document.createTextNode(' · Período: '),
+        strongTag(diasTrabajados + ' ' + (diasTrabajados === 1 ? 'día' : 'días'))
+    );
+    resultado.appendChild(summary);
+
+    const encabezados = ['Partner', 'Rol', 'Horario', 'Días/sem', 'H/día', 'H totales', 'Dto', 'Ext', 'H netas', '%', 'Propina'];
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    for (const h of encabezados) {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+    }
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
     for (const p of partners) {
-        html += `<tr>
-            <td><strong>${p.name}</strong></td>
-            <td>${p.rol === 'supervisor' ? 'Sup.' : 'Part.'}</td>
-            <td>${p.horarioLabel}</td>
-            <td>${p.diasPorSemana}d</td>
-            <td>${p.horasPorDia}h</td>
-            <td>${p.horasTotales}h</td>
-            <td>${p.dto > 0 ? p.dto + 'h' : '—'}</td>
-            <td>${p.extra > 0 ? p.extra + 'h' : '—'}</td>
-            <td>${p.netas}h</td>
-            <td>${p.pct.toFixed(1)}</td>
-            <td><strong>$${p.propina.toFixed(2)}</strong></td>
-        </tr>`;
+        const tr = document.createElement('tr');
+        const celdas = [
+            [p.name, true],
+            [p.rol === 'supervisor' ? 'Sup.' : 'Part.', false],
+            [p.horarioLabel, false],
+            [p.diasPorSemana + 'd', false],
+            [p.horasPorDia + 'h', false],
+            [p.horasTotales + 'h', false],
+            [p.dto > 0 ? p.dto + 'h' : '—', false],
+            [p.extra > 0 ? p.extra + 'h' : '—', false],
+            [p.netas + 'h', false],
+            [p.pct.toFixed(1), false],
+            ['$' + p.propina.toFixed(2), true]
+        ];
+        for (const [txt, esFuerte] of celdas) {
+            const td = document.createElement('td');
+            td.appendChild(esFuerte ? strongTag(txt) : document.createTextNode(txt));
+            tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
     }
 
     const suma = partners.reduce((s, p) => s + p.propina, 0);
-    html += `<tr class="total-row">
-        <td colspan="10"><strong>Total</strong></td>
-        <td><strong>$${suma.toFixed(2)}</strong></td>
-    </tr></tbody></table>`;
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'total-row';
+    const tdTotal = document.createElement('td');
+    tdTotal.colSpan = encabezados.length - 1;
+    tdTotal.appendChild(strongTag('Total'));
+    totalRow.appendChild(tdTotal);
+    const tdSuma = document.createElement('td');
+    tdSuma.appendChild(strongTag('$' + suma.toFixed(2)));
+    totalRow.appendChild(tdSuma);
+    tbody.appendChild(totalRow);
 
-    mostrarResultado(html);
+    table.appendChild(tbody);
+    resultado.appendChild(table);
+    darGlow();
+}
+
+function strongTag(txt) {
+    const strong = document.createElement('strong');
+    strong.textContent = txt;
+    return strong;
 }
 
 function mostrarResultado(html) {
     resultado.innerHTML = html;
     resultado.style.display = 'block';
     resultado.style.color = '#0f172a';
+    darGlow();
+}
+
+function darGlow() {
     resultado.classList.remove('result-glow');
     void resultado.offsetWidth;
     resultado.classList.add('result-glow');
