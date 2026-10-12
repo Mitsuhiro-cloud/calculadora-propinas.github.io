@@ -17,6 +17,28 @@ const SCHEDULES = {
     ],
 };
 
+const STORAGE_KEY = 'calculo_guardado';
+
+function guardarEstado(state) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        return true;
+    } catch (e) {
+        console.error('No se pudo guardar', e);
+        return false;
+    }
+}
+
+function leerEstado() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        console.error('Datos corruptos, se ignoran', e);
+        return null;
+    }
+}
+
 function crearDtoItem(dtoSection, tipo, cant) {
     const item = document.createElement('div');
     item.className = 'dto-item';
@@ -63,7 +85,7 @@ function recalcularDtoTotal(dtoSection) {
     dtoSection.querySelector('.dto-total').textContent = total + 'h';
 }
 
-function crearRowPartner() {
+function crearRowPartner(datos) {
     const id = idCounter++;
     const row = document.createElement('div');
     row.className = 'partner-row';
@@ -111,6 +133,7 @@ function crearRowPartner() {
         </div>
     `;
 
+    const nameInput = row.querySelector('.p-name');
     const rolSelect = row.querySelector('.p-rol');
     const horarioSelect = row.querySelector('.p-horario');
 
@@ -121,22 +144,43 @@ function crearRowPartner() {
         ).join('');
     }
 
+    if (datos && datos.rol) {
+        rolSelect.value = datos.rol;
+    }
     actualizarHorario();
+    if (datos && datos.horario) {
+        horarioSelect.value = datos.horario;
+    }
+    if (datos && datos.nombre) {
+        nameInput.value = datos.nombre;
+    }
     rolSelect.addEventListener('change', actualizarHorario);
 
     const dtoSection = row.querySelector('.dto-section');
+    const dtoItemsContainer = dtoSection.querySelector('.dto-items');
     dtoSection.querySelector('.btn-dto-add').addEventListener('click', () => {
-        const item = crearDtoItem(dtoSection, 8, 1);
-        dtoSection.querySelector('.dto-items').appendChild(item);
+        dtoItemsContainer.appendChild(crearDtoItem(dtoSection, 8, 1));
     });
-    const firstItem = crearDtoItem(dtoSection, 8, 1);
-    dtoSection.querySelector('.dto-items').appendChild(firstItem);
+
+    if (datos && Array.isArray(datos.dto)) {
+        for (const d of datos.dto) {
+            dtoItemsContainer.appendChild(crearDtoItem(dtoSection, Number(d.tipo), Number(d.cant)));
+        }
+    } else {
+        dtoItemsContainer.appendChild(crearDtoItem(dtoSection, 8, 1));
+    }
+    recalcularDtoTotal(dtoSection);
 
     const extraToggle = row.querySelector('.btn-extra-toggle');
     const extraPanel = row.querySelector('.extra-panel');
     const extraInput = row.querySelector('.extra-hours');
     const extraTotal = row.querySelector('.extra-total');
     const extraRemove = row.querySelector('.extra-remove');
+
+    if (datos && datos.extra) {
+        extraInput.value = datos.extra;
+        extraTotal.textContent = datos.extra + 'h';
+    }
 
     extraToggle.addEventListener('click', () => {
         const isVisible = extraPanel.style.display !== 'none';
@@ -160,16 +204,50 @@ function crearRowPartner() {
     partnersContainer.appendChild(row);
 }
 
-function initPartners() {
-    partnersContainer.innerHTML = '';
-    crearRowPartner();
+function leerFormulario() {
+    const rows = partnersContainer.querySelectorAll('.partner-row');
+    return {
+        total: document.getElementById('propinasTotales').value,
+        dias: document.getElementById('diasTrabajados').value,
+        partners: Array.from(rows).map(row => ({
+            nombre: row.querySelector('.p-name').value,
+            rol: row.querySelector('.p-rol').value,
+            horario: row.querySelector('.p-horario').value,
+            dto: Array.from(row.querySelectorAll('.dto-item')).map(item => ({
+                tipo: item.querySelector('.dto-tipo').value,
+                cant: item.querySelector('.dto-cant').value
+            })),
+            extra: row.querySelector('.extra-hours').value
+        }))
+    };
 }
 
-addPartnerBtn.addEventListener('click', crearRowPartner);
+function initPartners() {
+    partnersContainer.innerHTML = '';
+    const guardado = leerEstado();
+
+    if (guardado && guardado.partners && guardado.partners.length) {
+        for (const p of guardado.partners) {
+            crearRowPartner({
+                nombre: p.nombre,
+                rol: p.rol,
+                horario: p.horario,
+                dto: [],
+                extra: ''
+            });
+        }
+    } else {
+        crearRowPartner();
+    }
+}
+
+addPartnerBtn.addEventListener('click', () => crearRowPartner());
 
 calcularBtn.addEventListener('click', calcular);
 
 function calcular() {
+    guardarEstado(leerFormulario());
+
     const total = Number(document.getElementById('propinasTotales').value);
     const diasTrabajados = Number(document.getElementById('diasTrabajados').value) || 1;
 
